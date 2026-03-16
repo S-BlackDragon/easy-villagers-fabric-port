@@ -1,0 +1,4 @@
+accessWidener v2 named
+
+accessible method net/minecraft/world/entity/npc/Villager updateTrades ()V
+accessible method net/minecraft/world/entity/npc/Villager restock ()V

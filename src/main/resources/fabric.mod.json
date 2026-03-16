@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "easy_villagers",
+  "version": "${version}",
+  "name": "Easy Villagers - Unofficial Fabric Port",
+  "description": "Unofficial Fabric 1.21.1 port of Easy Villagers by Max Henkel. Adds villager automation blocks: Trader, Auto Trader, Breeder, Farmer, Converter, Incubator and Iron Farm.",
+  "authors": ["Max Henkel (original)", "Community Port"],
+  "contact": {
+    "homepage": "https://github.com/henkelmax/easy-villagers",
+    "issues": "https://github.com/henkelmax/easy-villagers/issues"
+  },
+  "license": "GPL-3.0",
+  "icon": "icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["de.maxhenkel.easyvillagers.Main"],
+    "client": ["de.maxhenkel.easyvillagers.ClientMain"]
+  },
+  "depends": {
+    "fabricloader": ">=0.15.0",
+    "fabric-api": "*",
+    "minecraft": "~1.21.1"
+  },
+  "accessWidener": "easy_villagers.accesswidener"
+}
