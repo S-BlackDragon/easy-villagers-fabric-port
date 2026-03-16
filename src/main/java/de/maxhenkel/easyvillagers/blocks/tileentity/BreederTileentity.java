@@ -216,8 +216,8 @@ public class BreederTileentity extends FakeWorldTileentity implements Container 
 
     @Override
     public void setItem(int slot, ItemStack stack) {
-        if (slot == 0) { villager1 = stack; villagerEntity1 = stack.isEmpty() ? null : VillagerData.createEasyVillager(stack, level); setChanged(); }
-        else if (slot == 1) { villager2 = stack; villagerEntity2 = stack.isEmpty() ? null : VillagerData.createEasyVillager(stack, level); setChanged(); }
+        if (slot == 0) { villager1 = stack; villagerEntity1 = stack.isEmpty() ? null : VillagerData.createEasyVillager(stack, level); setChanged(); sync(); }
+        else if (slot == 1) { villager2 = stack; villagerEntity2 = stack.isEmpty() ? null : VillagerData.createEasyVillager(stack, level); setChanged(); sync(); }
         else if (slot >= 2 && slot <= 5) { foodInventory.set(slot - 2, stack); setChanged(); }
         else if (slot >= 6 && slot <= 9) { outputInventory.set(slot - 6, stack); setChanged(); }
     }

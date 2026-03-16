@@ -26,10 +26,16 @@ public abstract class TraderTileentityBase extends VillagerTileentity {
 
     protected Block workstation;
     protected long nextRestock;
+    /** True if the villager has completed at least one trade while inside this block. */
+    protected boolean tradedInThisBlock = false;
 
     public TraderTileentityBase(BlockEntityType<?> type, BlockState defaultState, BlockPos pos, BlockState state) {
         super(type, defaultState, pos, state);
         workstation = Blocks.AIR;
+    }
+
+    public boolean hasTradedInThisBlock() {
+        return tradedInThisBlock;
     }
 
     public Block getWorkstation() {
@@ -74,6 +80,7 @@ public abstract class TraderTileentityBase extends VillagerTileentity {
     @Override
     protected void onAddVillager(EasyVillagerEntity villager) {
         super.onAddVillager(villager);
+        tradedInThisBlock = false;
         if (hasWorkstation()) {
             fixProfession();
         }
@@ -114,6 +121,7 @@ public abstract class TraderTileentityBase extends VillagerTileentity {
         // After each completed trade: save XP/level changes and refresh client offers
         TraderTileentityBase self = this;
         villagerEntity.setOnTradeCompleted(() -> {
+            self.tradedInThisBlock = true;
             self.saveVillagerEntity();
             self.setChanged();
             if (villagerEntity.getTradingPlayer() instanceof ServerPlayer sp) {
@@ -194,6 +202,7 @@ public abstract class TraderTileentityBase extends VillagerTileentity {
             compound.putString("Workstation", BuiltInRegistries.BLOCK.getKey(workstation).toString());
         }
         compound.putLong("NextRestock", nextRestock);
+        compound.putBoolean("TradedInThisBlock", tradedInThisBlock);
     }
 
     @Override
@@ -204,6 +213,7 @@ public abstract class TraderTileentityBase extends VillagerTileentity {
             workstation = Blocks.AIR;
         }
         nextRestock = compound.getLong("NextRestock");
+        tradedInThisBlock = compound.getBoolean("TradedInThisBlock");
         super.loadAdditional(compound, provider);
     }
 

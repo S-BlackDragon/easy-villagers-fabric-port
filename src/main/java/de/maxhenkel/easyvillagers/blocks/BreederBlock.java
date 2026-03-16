@@ -115,14 +115,17 @@ public class BreederBlock extends TraderBlockBase {
         if (!state.is(newState.getBlock()) && !level.isClientSide) {
             BlockEntity be = level.getBlockEntity(pos);
             if (be instanceof BreederTileentity breeder) {
-                if (breeder.hasVillager1()) Containers.dropItemStack(level, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, breeder.getVillager1());
-                if (breeder.hasVillager2()) Containers.dropItemStack(level, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, breeder.getVillager2());
+                // Drop output baby villagers and clear slots so copy_block_entity doesn't duplicate them
                 for (int i = 2; i <= 9; i++) {
-                    Containers.dropItemStack(level, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, breeder.getItem(i));
+                    ItemStack item = breeder.getItem(i);
+                    if (!item.isEmpty()) {
+                        Containers.dropItemStack(level, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, item);
+                        breeder.setItem(i, ItemStack.EMPTY);
+                    }
                 }
+                // Villager1 and Villager2 stay inside the dropped block item (via copy_block_entity)
             }
         }
-        // Skip TraderBlockBase.onRemove (it handles VillagerTileentity which Breeder doesn't extend)
         super.onRemove(state, level, pos, newState, movedByPiston);
     }
 

@@ -9,6 +9,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Containers;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.level.Level;
@@ -50,11 +51,15 @@ public class IronFarmBlock extends TraderBlockBase {
         if (!state.is(newState.getBlock()) && !level.isClientSide) {
             BlockEntity be = level.getBlockEntity(pos);
             if (be instanceof IronFarmTileentity ironFarm) {
+                // Drop output items and clear slots so copy_block_entity doesn't duplicate them
                 for (int i = 1; i <= 4; i++) {
-                    Containers.dropItemStack(level,
-                            pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
-                            ironFarm.getItem(i));
+                    ItemStack item = ironFarm.getItem(i);
+                    if (!item.isEmpty()) {
+                        Containers.dropItemStack(level, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, item);
+                        ironFarm.setItem(i, ItemStack.EMPTY);
+                    }
                 }
+                // Villager stays inside the dropped block item (via copy_block_entity)
             }
         }
         super.onRemove(state, level, pos, newState, movedByPiston);

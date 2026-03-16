@@ -31,10 +31,6 @@ public class CopyBlockEntityData extends LootItemConditionalFunction {
         }
         stack.applyComponents(blockEntity.collectComponents());
         CompoundTag compoundtag = blockEntity.saveCustomAndMetadata(context.getLevel().registryAccess());
-        // Strip villager data — villagers drop as separate items via getDrops() override
-        compoundtag.remove("Villager");
-        compoundtag.remove("Villager1");
-        compoundtag.remove("Villager2");
         BlockItem.setBlockEntityData(stack, blockEntity.getType(), compoundtag);
         return stack;
     }

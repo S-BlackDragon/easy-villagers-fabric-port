@@ -9,3 +9,11 @@ out/
 .settings/
 eclipse/
 gradlew.bat.bak
+.claude/
+memory/
+plan-easy.txt
+furnace_ref.png
+META-INF/
+assets/fabric-screen-handler-api-v1/
+fabric-screen-handler-api-v1.*
+fabric.mod.json

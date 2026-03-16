@@ -3,6 +3,7 @@ package de.maxhenkel.easyvillagers.blocks;
 import de.maxhenkel.easyvillagers.blocks.tileentity.TraderTileentityBase;
 import de.maxhenkel.easyvillagers.blocks.tileentity.VillagerTileentity;
 import de.maxhenkel.easyvillagers.datacomponents.VillagerData;
+import de.maxhenkel.easyvillagers.entity.EasyVillagerEntity;
 import de.maxhenkel.easyvillagers.items.VillagerItem;
 import org.jetbrains.annotations.Nullable;
 import net.minecraft.core.BlockPos;
@@ -76,6 +77,32 @@ public abstract class TraderBlockBase extends VillagerBlockBase implements Entit
                 level.playSound(null, pos, type.getPlaceSound(), SoundSource.BLOCKS, type.getVolume(), type.getPitch());
             }
             return ItemInteractionResult.sidedSuccess(level.isClientSide);
+        } else if (traderBase != null && player.isShiftKeyDown() && traderBase.hasWorkstation()) {
+            if (level.isClientSide) {
+                traderBase.setWorkstation(net.minecraft.world.level.block.Blocks.AIR);
+            } else {
+                // Reset profession if villager hasn't traded inside this block
+                if (!traderBase.hasTradedInThisBlock()) {
+                    EasyVillagerEntity v = traderBase.getVillagerEntity();
+                    if (v != null) {
+                        v.setVillagerData(v.getVillagerData().setProfession(net.minecraft.world.entity.npc.VillagerProfession.NONE));
+                        traderBase.saveVillagerEntity();
+                    }
+                }
+                ItemStack blockStack = new ItemStack(traderBase.removeWorkstation());
+                if (heldItem.isEmpty()) {
+                    player.setItemInHand(handIn, blockStack);
+                } else {
+                    if (!player.getInventory().add(blockStack)) {
+                        Direction direction = state.getValue(TraderBlockBase.FACING);
+                        Containers.dropItemStack(level, direction.getStepX() + pos.getX() + 0.5D, pos.getY() + 0.5D, direction.getStepZ() + pos.getZ() + 0.5D, blockStack);
+                    }
+                }
+                if (traderBase.hasVillager()) {
+                    playVillagerSound(level, pos, SoundEvents.VILLAGER_NO);
+                }
+            }
+            return ItemInteractionResult.sidedSuccess(level.isClientSide);
         } else if (player.isShiftKeyDown() && trader.hasVillager()) {
             if (level.isClientSide) {
                 trader.setVillager(ItemStack.EMPTY);
@@ -91,24 +118,6 @@ public abstract class TraderBlockBase extends VillagerBlockBase implements Entit
                 }
                 float celebratePitch = VillagerData.isBaby(stack) ? 1.6F : 0.9F;
                 playVillagerSound(level, pos, SoundEvents.VILLAGER_CELEBRATE, celebratePitch);
-            }
-            return ItemInteractionResult.sidedSuccess(level.isClientSide);
-        } else if (traderBase != null && player.isShiftKeyDown() && traderBase.hasWorkstation()) {
-            if (level.isClientSide) {
-                traderBase.setWorkstation(net.minecraft.world.level.block.Blocks.AIR);
-            } else {
-                ItemStack blockStack = new ItemStack(traderBase.removeWorkstation());
-                if (heldItem.isEmpty()) {
-                    player.setItemInHand(handIn, blockStack);
-                } else {
-                    if (!player.getInventory().add(blockStack)) {
-                        Direction direction = state.getValue(TraderBlockBase.FACING);
-                        Containers.dropItemStack(level, direction.getStepX() + pos.getX() + 0.5D, pos.getY() + 0.5D, direction.getStepZ() + pos.getZ() + 0.5D, blockStack);
-                    }
-                }
-                if (traderBase.hasVillager()) {
-                    playVillagerSound(level, pos, SoundEvents.VILLAGER_NO);
-                }
             }
             return ItemInteractionResult.sidedSuccess(level.isClientSide);
         } else if (traderBase != null && openGUI(traderBase, player, level, pos)) {
@@ -142,18 +151,7 @@ public abstract class TraderBlockBase extends VillagerBlockBase implements Entit
 
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
-        if (!state.is(newState.getBlock()) && !level.isClientSide) {
-            BlockEntity be = level.getBlockEntity(pos);
-            if (be instanceof VillagerTileentity trader) {
-                if (trader.hasVillager()) {
-                    Containers.dropItemStack(level, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, trader.getVillager());
-                }
-                if (be instanceof TraderTileentityBase traderBase && traderBase.hasWorkstation()) {
-                    ItemStack workstationStack = new ItemStack(traderBase.getWorkstation());
-                    Containers.dropItemStack(level, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, workstationStack);
-                }
-            }
-        }
+        // Villager and workstation are preserved inside the dropped block item via copy_block_entity loot function.
         super.onRemove(state, level, pos, newState, movedByPiston);
     }
 
