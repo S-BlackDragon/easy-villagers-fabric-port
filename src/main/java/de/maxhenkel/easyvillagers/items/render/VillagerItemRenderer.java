@@ -1,6 +1,7 @@
 package de.maxhenkel.easyvillagers.items.render;
 
 import com.mojang.blaze3d.platform.Lighting;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import de.maxhenkel.easyvillagers.datacomponents.VillagerData;
 import de.maxhenkel.easyvillagers.entity.EasyVillagerEntity;
@@ -10,6 +11,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.VillagerRenderer;
 import net.minecraft.world.item.ItemDisplayContext;
@@ -45,23 +47,23 @@ public class VillagerItemRenderer implements BuiltinItemRendererRegistry.Dynamic
         boolean isGui = mode == ItemDisplayContext.GUI || mode == ItemDisplayContext.FIXED;
 
         if (isGui) {
-            // Identical pattern to InventoryScreen.renderEntityInInventory():
-            // set entity lighting → render into the MAIN render buffer → flush → restore.
-            // Using mc.renderBuffers().bufferSource() (not the passed vertexConsumers)
-            // guarantees we always have a real BufferSource we can flush on demand.
+            // Mirror exactly what InventoryScreen.renderEntityInInventory() does in vanilla:
+            // lighting → dispatcher.render() wrapped in runAsFancy → endBatch → restore
             Lighting.setupForEntityInInventory();
+            EntityRenderDispatcher dispatcher = mc.getEntityRenderDispatcher();
+            dispatcher.setRenderShadow(false);
             MultiBufferSource.BufferSource renderBuffer = mc.renderBuffers().bufferSource();
 
             matrices.pushPose();
-            try {
-                matrices.translate(0.5D, yBase, 0.5D);
-                if (baby) matrices.scale(0.6F, 0.6F, 0.6F);
-                renderer.render(cacheVillager, 0F, 1F, matrices, renderBuffer, LightTexture.FULL_BRIGHT);
-            } finally {
-                matrices.popPose();
-            }
+            matrices.translate(0.5D, yBase, 0.5D);
+            if (baby) matrices.scale(0.6F, 0.6F, 0.6F);
+            RenderSystem.runAsFancy(() ->
+                    dispatcher.render(cacheVillager, 0D, 0D, 0D, 0F, 1F, matrices, renderBuffer, LightTexture.FULL_BRIGHT)
+            );
+            matrices.popPose();
 
             renderBuffer.endBatch();
+            dispatcher.setRenderShadow(true);
             Lighting.setupFor3DItems();
         } else {
             // In-hand / dropped / item-frame: use the provided buffer and world lighting
