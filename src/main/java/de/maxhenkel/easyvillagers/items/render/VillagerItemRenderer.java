@@ -1,5 +1,6 @@
 package de.maxhenkel.easyvillagers.items.render;
 
+import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.vertex.PoseStack;
 import de.maxhenkel.easyvillagers.datacomponents.VillagerData;
 import de.maxhenkel.easyvillagers.entity.EasyVillagerEntity;
@@ -7,7 +8,6 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry;
 import net.minecraft.client.Minecraft;
-import com.mojang.blaze3d.platform.Lighting;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -40,36 +40,39 @@ public class VillagerItemRenderer implements BuiltinItemRendererRegistry.Dynamic
 
         boolean baby = VillagerData.isBaby(stack);
         EasyVillagerEntity cacheVillager = VillagerData.getCacheVillager(stack, mc.level);
+        double yBase = baby ? 0.05D : -0.1D;
 
         boolean isGui = mode == ItemDisplayContext.GUI || mode == ItemDisplayContext.FIXED;
 
         if (isGui) {
-            // Flush any pending vertices, then set up directional lights for entity rendering.
-            // Without this, entities appear as dark silhouettes in GUI context.
-            if (vertexConsumers instanceof MultiBufferSource.BufferSource bs) {
-                bs.endBatch();
-            }
+            // Identical pattern to InventoryScreen.renderEntityInInventory():
+            // set entity lighting → render into the MAIN render buffer → flush → restore.
+            // Using mc.renderBuffers().bufferSource() (not the passed vertexConsumers)
+            // guarantees we always have a real BufferSource we can flush on demand.
             Lighting.setupForEntityInInventory();
-        }
+            MultiBufferSource.BufferSource renderBuffer = mc.renderBuffers().bufferSource();
 
-        double yBase = baby ? 0.05D : -0.1D;
-        matrices.pushPose();
-        try {
-            matrices.translate(0.5D, yBase, 0.5D);
-            if (baby) {
-                matrices.scale(0.6F, 0.6F, 0.6F);
+            matrices.pushPose();
+            try {
+                matrices.translate(0.5D, yBase, 0.5D);
+                if (baby) matrices.scale(0.6F, 0.6F, 0.6F);
+                renderer.render(cacheVillager, 0F, 1F, matrices, renderBuffer, LightTexture.FULL_BRIGHT);
+            } finally {
+                matrices.popPose();
             }
-            renderer.render(cacheVillager, 0F, 1F, matrices, vertexConsumers, LightTexture.FULL_BRIGHT);
-        } finally {
-            matrices.popPose();
-        }
 
-        if (isGui) {
-            // Flush entity vertices, then restore the standard 3D item lighting.
-            if (vertexConsumers instanceof MultiBufferSource.BufferSource bs) {
-                bs.endBatch();
-            }
+            renderBuffer.endBatch();
             Lighting.setupFor3DItems();
+        } else {
+            // In-hand / dropped / item-frame: use the provided buffer and world lighting
+            matrices.pushPose();
+            try {
+                matrices.translate(0.5D, yBase, 0.5D);
+                if (baby) matrices.scale(0.6F, 0.6F, 0.6F);
+                renderer.render(cacheVillager, 0F, 1F, matrices, vertexConsumers, light);
+            } finally {
+                matrices.popPose();
+            }
         }
     }
 }
