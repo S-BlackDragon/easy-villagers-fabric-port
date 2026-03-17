@@ -22,6 +22,7 @@
   "itemGroup.easy_villagers": "Aldeanos Fáciles",
   "tooltip.easy_villagers.villager_profession": "%s (%s)",
   "tooltip.easy_villagers.zombie_villager_profession": "%s (%s)",
+  "tooltip.easy_villagers.converted": "★ Convertido (Tratos con Descuento)",
   "tooltip.easy_villagers.cycle_trades": "Rotar Intercambios",
   "jei.easy_villagers.breeding": "Reproducción",
   "jei.easy_villagers.converting": "Conversión",

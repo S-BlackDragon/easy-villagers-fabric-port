@@ -8,12 +8,12 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.entity.VillagerRenderer;
 
-import java.lang.ref.WeakReference;
-
 @Environment(EnvType.CLIENT)
 public class VillagerRendererBase<T extends FakeWorldTileentity> extends BlockRendererBase<T> {
 
-    protected WeakReference<VillagerRenderer> villagerRendererCache = new WeakReference<>(null);
+    // Strong reference — a WeakReference would be GC'd between frames, causing
+    // the renderer to be recreated in an inconsistent state each time.
+    protected VillagerRenderer villagerRendererCache;
 
     public VillagerRendererBase(BlockEntityRendererProvider.Context renderer) {
         super(renderer);
@@ -25,11 +25,9 @@ public class VillagerRendererBase<T extends FakeWorldTileentity> extends BlockRe
     }
 
     protected VillagerRenderer getVillagerRenderer() {
-        VillagerRenderer villagerRenderer = villagerRendererCache.get();
-        if (villagerRenderer == null) {
-            villagerRenderer = new VillagerRenderer(createEntityRenderer());
-            villagerRendererCache = new WeakReference<>(villagerRenderer);
+        if (villagerRendererCache == null) {
+            villagerRendererCache = new VillagerRenderer(createEntityRenderer());
         }
-        return villagerRenderer;
+        return villagerRendererCache;
     }
 }

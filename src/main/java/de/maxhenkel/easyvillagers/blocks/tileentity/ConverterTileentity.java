@@ -5,6 +5,8 @@ import de.maxhenkel.easyvillagers.datacomponents.VillagerData;
 import de.maxhenkel.easyvillagers.entity.EasyVillagerEntity;
 import de.maxhenkel.easyvillagers.items.ModItems;
 import de.maxhenkel.easyvillagers.items.VillagerItem;
+import de.maxhenkel.easyvillagers.items.ZombieVillagerItem;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -53,13 +55,13 @@ public class ConverterTileentity extends FakeWorldTileentity implements Containe
         if (!te.hasInput() || te.hasOutput()) return;
 
         if (te.convertingTicks == 0) {
-            if (!(te.inputVillager.getItem() instanceof VillagerItem) || VillagerData.isBaby(te.inputVillager)) return;
+            if (!(te.inputVillager.getItem() instanceof ZombieVillagerItem)) return;
         }
 
         te.convertingTicks++;
 
         if (te.convertingTicks >= MAX_TICKS) {
-            // Build output: same villager with discounted trades
+            // Build output: normal villager with discounted trades + visual mark
             ItemStack output = new ItemStack(ModItems.VILLAGER);
             VillagerData data = te.inputVillager.get(ModItems.VILLAGER_DATA_COMPONENT);
             if (data != null) output.set(ModItems.VILLAGER_DATA_COMPONENT, data);
@@ -70,6 +72,9 @@ public class ConverterTileentity extends FakeWorldTileentity implements Containe
                 offer.addToSpecialPriceDiff(-5);
             }
             VillagerData.applyToItem(output, entity);
+
+            // Mark as converted so players can distinguish discounted villagers
+            output.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
 
             te.outputVillager = output;
             te.inputVillager = ItemStack.EMPTY;
@@ -129,7 +134,7 @@ public class ConverterTileentity extends FakeWorldTileentity implements Containe
 
     @Override
     public boolean canPlaceItem(int slot, ItemStack stack) {
-        if (slot == 0) return stack.getItem() instanceof VillagerItem && !VillagerData.isBaby(stack);
+        if (slot == 0) return stack.getItem() instanceof ZombieVillagerItem;
         return false;
     }
 

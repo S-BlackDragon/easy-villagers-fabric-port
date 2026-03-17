@@ -5,6 +5,7 @@ import de.maxhenkel.easyvillagers.blocks.tileentity.ModTileEntities;
 import de.maxhenkel.easyvillagers.blocks.tileentity.TraderTileentityBase;
 import de.maxhenkel.easyvillagers.datacomponents.VillagerData;
 import de.maxhenkel.easyvillagers.gui.IncubatorMenu;
+import de.maxhenkel.easyvillagers.items.VillagerItem;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -41,6 +42,13 @@ public class IncubatorBlock extends TraderBlockBase {
 
         BlockEntity be = level.getBlockEntity(pos);
         if (!(be instanceof IncubatorTileentity incubator)) return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+
+        // Quick insert: right-clicking with a baby villager inserts it without opening the GUI
+        if (heldItem.getItem() instanceof VillagerItem && VillagerData.isBaby(heldItem) && !incubator.hasInput()) {
+            incubator.setItem(0, heldItem.copyWithCount(1));
+            heldItem.shrink(1);
+            return ItemInteractionResult.sidedSuccess(false);
+        }
 
         if (player instanceof ServerPlayer serverPlayer) {
             serverPlayer.openMenu(new ExtendedScreenHandlerFactory<BlockPos>() {

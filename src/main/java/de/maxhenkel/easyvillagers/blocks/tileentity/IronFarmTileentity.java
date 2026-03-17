@@ -7,6 +7,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.Container;
+import net.minecraft.world.WorldlyContainer;
+import net.minecraft.core.Direction;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -19,7 +21,10 @@ import net.minecraft.world.level.block.state.BlockState;
  *   slot 0      = villager input (managed by parent VillagerTileentity)
  *   slots 1–4   = output (2×2 grid): iron ingots and poppies
  */
-public class IronFarmTileentity extends TraderTileentityBase implements Container {
+public class IronFarmTileentity extends TraderTileentityBase implements Container, WorldlyContainer {
+
+    private static final int[] SLOTS_OUTPUT = {1, 2, 3, 4};
+    private static final int[] SLOTS_NONE   = {};
 
     public static final int IRON_INTERVAL = 600; // 30 seconds
 
@@ -151,7 +156,27 @@ public class IronFarmTileentity extends TraderTileentityBase implements Containe
 
     @Override
     public boolean canPlaceItem(int slot, ItemStack stack) {
-        return false; // all slots are managed through block interaction or hopper; GUI is take-only except villager
+        return false;
+    }
+
+    // -----------------------------------------------------------------------
+    // WorldlyContainer (hopper / pipe support)
+    // -----------------------------------------------------------------------
+
+    @Override
+    public int[] getSlotsForFace(Direction side) {
+        if (side == Direction.DOWN) return SLOTS_OUTPUT; // pull iron/poppies from below
+        return SLOTS_NONE;                               // villager slot never accessible
+    }
+
+    @Override
+    public boolean canPlaceItemThroughFace(int slot, ItemStack stack, Direction dir) {
+        return false; // nothing goes in via hopper
+    }
+
+    @Override
+    public boolean canTakeItemThroughFace(int slot, ItemStack stack, Direction dir) {
+        return slot >= 1 && slot <= 4; // only output slots
     }
 
     @Override

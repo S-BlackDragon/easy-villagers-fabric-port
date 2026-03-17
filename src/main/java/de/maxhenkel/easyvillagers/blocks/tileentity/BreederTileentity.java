@@ -12,6 +12,8 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.WorldlyContainer;
+import net.minecraft.core.Direction;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -27,7 +29,12 @@ import org.jetbrains.annotations.Nullable;
  *   slots 2–5   = food input (4 slots, any item)
  *   slots 6–9   = baby villager output (4 slots)
  */
-public class BreederTileentity extends FakeWorldTileentity implements Container {
+public class BreederTileentity extends FakeWorldTileentity implements Container, WorldlyContainer {
+
+    // Slots exposed to hoppers/pipes: food input from sides, babies output from below
+    private static final int[] SLOTS_FOOD   = {2, 3, 4, 5};
+    private static final int[] SLOTS_OUTPUT = {6, 7, 8, 9};
+    private static final int[] SLOTS_NONE   = {};
 
     public static final int BREED_INTERVAL = 600; // 30 seconds
 
@@ -229,6 +236,27 @@ public class BreederTileentity extends FakeWorldTileentity implements Container 
         if (slot == 0 || slot == 1) return stack.getItem() instanceof VillagerItem && !VillagerData.isBaby(stack);
         if (slot >= 2 && slot <= 5) return true;
         return false; // output slots: no placing
+    }
+
+    // -----------------------------------------------------------------------
+    // WorldlyContainer (hopper / pipe support)
+    // -----------------------------------------------------------------------
+
+    @Override
+    public int[] getSlotsForFace(Direction side) {
+        if (side == Direction.DOWN) return SLOTS_OUTPUT; // pull babies from below
+        if (side == Direction.UP)   return SLOTS_NONE;   // nothing from top
+        return SLOTS_FOOD;                               // push food from sides
+    }
+
+    @Override
+    public boolean canPlaceItemThroughFace(int slot, ItemStack stack, Direction dir) {
+        return slot >= 2 && slot <= 5; // only food slots accept hopper input
+    }
+
+    @Override
+    public boolean canTakeItemThroughFace(int slot, ItemStack stack, Direction dir) {
+        return slot >= 6 && slot <= 9; // only baby output slots can be extracted
     }
 
     @Override

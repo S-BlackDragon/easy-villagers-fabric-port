@@ -7,6 +7,8 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry;
 import net.minecraft.client.Minecraft;
+import com.mojang.blaze3d.platform.Lighting;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.VillagerRenderer;
@@ -38,11 +40,36 @@ public class VillagerItemRenderer implements BuiltinItemRendererRegistry.Dynamic
 
         boolean baby = VillagerData.isBaby(stack);
         EasyVillagerEntity cacheVillager = VillagerData.getCacheVillager(stack, mc.level);
-        double yOffset = baby ? 0.15D : 0.0D;
+
+        boolean isGui = mode == ItemDisplayContext.GUI || mode == ItemDisplayContext.FIXED;
+
+        if (isGui) {
+            // Flush any pending vertices, then set up directional lights for entity rendering.
+            // Without this, entities appear as dark silhouettes in GUI context.
+            if (vertexConsumers instanceof MultiBufferSource.BufferSource bs) {
+                bs.endBatch();
+            }
+            Lighting.setupForEntityInInventory();
+        }
+
+        double yBase = baby ? 0.05D : -0.1D;
         matrices.pushPose();
-        matrices.translate(0.5D, yOffset, 0.5D);
-        matrices.scale(1.0F, 1.0F, 1.0F);
-        renderer.render(cacheVillager, 0F, 1F, matrices, vertexConsumers, light);
-        matrices.popPose();
+        try {
+            matrices.translate(0.5D, yBase, 0.5D);
+            if (baby) {
+                matrices.scale(0.6F, 0.6F, 0.6F);
+            }
+            renderer.render(cacheVillager, 0F, 1F, matrices, vertexConsumers, LightTexture.FULL_BRIGHT);
+        } finally {
+            matrices.popPose();
+        }
+
+        if (isGui) {
+            // Flush entity vertices, then restore the standard 3D item lighting.
+            if (vertexConsumers instanceof MultiBufferSource.BufferSource bs) {
+                bs.endBatch();
+            }
+            Lighting.setupFor3DItems();
+        }
     }
 }

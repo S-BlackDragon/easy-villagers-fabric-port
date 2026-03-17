@@ -66,16 +66,11 @@ public class FarmerTileentity extends TraderTileentityBase implements WorldlyCon
         ItemStack food = localSlots[0];
         if (food.isEmpty()) return;
 
-        // Consume 1 food item and produce 2-4 of the same type in output
-        ItemStack produce = food.copy();
-        produce.setCount(1);
-        food.shrink(1);
-        if (food.isEmpty()) localSlots[0] = ItemStack.EMPTY;
-
+        // Food is NOT consumed; it acts as a template for what to produce
+        ItemStack produce = food.copyWithCount(1);
         int amount = 2 + level.random.nextInt(3); // 2, 3, or 4
-        ItemStack output = produce.copy();
-        output.setCount(amount);
-        tryInsertOutput(output);
+        produce.setCount(amount);
+        tryInsertOutput(produce);
     }
 
     private void tryInsertOutput(ItemStack stack) {

@@ -3,6 +3,7 @@ package de.maxhenkel.easyvillagers.entity;
 import de.maxhenkel.easyvillagers.Main;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.gossip.GossipType;
@@ -26,6 +27,14 @@ public class EasyVillagerEntity extends Villager {
     public void markAsRealWorldEntity() {
         this.isRealWorldEntity = true;
         setSilent(false);
+    }
+
+    @Override
+    public void playSound(SoundEvent sound, float volume, float pitch) {
+        // Only real-world entities (placed via item) are allowed to emit sounds
+        if (isRealWorldEntity) {
+            super.playSound(sound, volume, pitch);
+        }
     }
 
     /** Called by the tile entity after each completed trade to save XP/level changes. */

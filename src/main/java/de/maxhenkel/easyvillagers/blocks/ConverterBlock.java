@@ -4,6 +4,7 @@ import de.maxhenkel.easyvillagers.blocks.tileentity.ConverterTileentity;
 import de.maxhenkel.easyvillagers.blocks.tileentity.ModTileEntities;
 import de.maxhenkel.easyvillagers.blocks.tileentity.TraderTileentityBase;
 import de.maxhenkel.easyvillagers.gui.ConverterMenu;
+import de.maxhenkel.easyvillagers.items.ZombieVillagerItem;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -35,6 +36,13 @@ public class ConverterBlock extends TraderBlockBase {
 
         BlockEntity be = level.getBlockEntity(pos);
         if (!(be instanceof ConverterTileentity converter)) return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+
+        // Quick insert: right-clicking with a zombie villager inserts it without opening the GUI
+        if (heldItem.getItem() instanceof ZombieVillagerItem && !converter.hasInput()) {
+            converter.setItem(0, heldItem.copyWithCount(1));
+            heldItem.shrink(1);
+            return ItemInteractionResult.sidedSuccess(false);
+        }
 
         if (player instanceof ServerPlayer serverPlayer) {
             serverPlayer.openMenu(new ExtendedScreenHandlerFactory<BlockPos>() {

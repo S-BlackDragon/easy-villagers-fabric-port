@@ -26,6 +26,7 @@
   "itemGroup.easy_villagers": "Easy Villagers",
   "tooltip.easy_villagers.villager_profession": "%s (%s)",
   "tooltip.easy_villagers.zombie_villager_profession": "%s (%s)",
+  "tooltip.easy_villagers.converted": "★ Converted (Discounted Trades)",
   "tooltip.easy_villagers.cycle_trades": "Cycle Trades",
   "jei.easy_villagers.breeding": "Breeding",
   "jei.easy_villagers.converting": "Converting",

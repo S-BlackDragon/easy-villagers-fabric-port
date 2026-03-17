@@ -10,14 +10,6 @@ import net.minecraft.world.entity.player.Inventory;
 @Environment(EnvType.CLIENT)
 public class BreederScreen extends AbstractContainerScreen<BreederMenu> {
 
-    private static final int COL_BG      = 0xFFC6C6C6;
-    private static final int COL_BORDER  = 0xFF373737;
-    private static final int COL_SLOT    = 0xFF8B8B8B;
-    private static final int COL_SEP     = 0xFF555555;
-    private static final int COL_BAR_BG  = 0xFF333333;
-    private static final int COL_BAR_FG  = 0xFFFF8040; // warm orange for "love" breeding
-    private static final int COL_ARROW   = 0xFF666666;
-
     public BreederScreen(BreederMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
         imageWidth  = 176;
@@ -26,6 +18,7 @@ public class BreederScreen extends AbstractContainerScreen<BreederMenu> {
 
     @Override
     public void render(GuiGraphics g, int mx, int my, float delta) {
+        renderBackground(g, mx, my, delta);
         super.render(g, mx, my, delta);
         renderTooltip(g, mx, my);
     }
@@ -34,46 +27,46 @@ public class BreederScreen extends AbstractContainerScreen<BreederMenu> {
     protected void renderBg(GuiGraphics g, float delta, int mx, int my) {
         int l = leftPos, t = topPos;
 
-        // Main background
-        g.fill(l, t, l + imageWidth, t + imageHeight, COL_BG);
+        // Main background (vanilla gray panel)
+        g.fill(l, t, l + imageWidth, t + imageHeight, 0xFFC6C6C6);
+        // Beveled outer border
+        g.fill(l,     t,     l + imageWidth, t + 1,              0xFF555555);
+        g.fill(l,     t + imageHeight - 1, l + imageWidth, t + imageHeight, 0xFF555555);
+        g.fill(l,     t,     l + 1,         t + imageHeight,    0xFF555555);
+        g.fill(l + imageWidth - 1, t, l + imageWidth, t + imageHeight, 0xFF555555);
+        g.fill(l + 1, t + 1, l + imageWidth - 1, t + 2,              0xFFFFFFFF);
+        g.fill(l + 1, t + 1, l + 2,              t + imageHeight - 1, 0xFFFFFFFF);
+        g.fill(l + 1, t + imageHeight - 2, l + imageWidth - 1, t + imageHeight - 1, 0xFF373737);
+        g.fill(l + imageWidth - 2, t + 1, l + imageWidth - 1, t + imageHeight - 1, 0xFF373737);
 
-        // Separator below title
-        g.fill(l + 7, t + 16, l + 169, t + 17, COL_SEP);
+        // Villager input slots (slots 0=villager1 at x=8,y=17  and  1=villager2 at x=26,y=17)
+        drawSlot(g, l + 7,  t + 16);
+        drawSlot(g, l + 25, t + 16);
 
-        // --- Villager input slots (0, 1) ---
-        drawSlot(g, l + 7,  t + 16);  // villager1
-        drawSlot(g, l + 25, t + 16);  // villager2
+        // Arrow from villagers to output
+        drawArrow(g, l + 48, t + 25);
 
-        // Arrow ">" from villager area to output (centered at y=24)
-        for (int i = 0; i < 7; i++) {
-            int half = 3 - Math.abs(i - 3);
-            g.fill(l + 48 + i, t + 24 - half, l + 49 + i, t + 24 + half + 1, COL_ARROW);
-        }
+        // 2×2 baby output (slots 6–9, menu positions: x=98/116, y=17/35)
+        drawSlot(g, l + 97,  t + 16);
+        drawSlot(g, l + 115, t + 16);
+        drawSlot(g, l + 97,  t + 34);
+        drawSlot(g, l + 115, t + 34);
 
-        // --- Output slots 2×2 (slots 6–9) ---
-        drawSlot(g, l + 97,  t + 16);  // output[0]
-        drawSlot(g, l + 115, t + 16);  // output[1]
-        drawSlot(g, l + 97,  t + 34);  // output[2]
-        drawSlot(g, l + 115, t + 34);  // output[3]
+        // 4 food input slots (slots 2–5, menu positions: x=8+i*18, y=42)
+        for (int i = 0; i < 4; i++) drawSlot(g, l + 7 + i * 18, t + 41);
 
-        // --- Food input slots (slots 2–5) ---
-        for (int i = 0; i < 4; i++) {
-            drawSlot(g, l + 7 + i * 18, t + 41);
-        }
+        // Progress bar (breed timer)
+        int progress = menu.getBreedProgress();
+        g.fill(l + 7,  t + 62, l + 139, t + 69, 0xFF373737);
+        g.fill(l + 8,  t + 63, l + 138, t + 68, 0xFF333333);
+        if (progress > 0)
+            g.fill(l + 8, t + 63, l + 8 + 130 * progress / 100, t + 68, 0xFFFF8040);
 
-        // Progress bar (below food slots)
-        int progress = menu.getBreedProgress(); // 0..100
-        int bx = l + 8, by = t + 62, bw = 130, bh = 6;
-        g.fill(bx - 1, by - 1, bx + bw + 1, by + bh + 1, COL_BORDER);
-        g.fill(bx, by, bx + bw, by + bh, COL_BAR_BG);
-        if (progress > 0) {
-            g.fill(bx, by, bx + bw * progress / 100, by + bh, COL_BAR_FG);
-        }
+        // Separator above player inventory
+        g.fill(l + 7, t + 71, l + 169, t + 72, 0xFF888888);
+        g.fill(l + 7, t + 72, l + 169, t + 73, 0xFFFFFFFF);
 
-        // Separator above inventory
-        g.fill(l + 7, t + 71, l + 169, t + 72, COL_SEP);
-
-        // Player inventory slot backgrounds
+        // Player inventory (menu positions: x=8+col*18, y=83+row*18 / y=141)
         for (int row = 0; row < 3; row++)
             for (int col = 0; col < 9; col++)
                 drawSlot(g, l + 7 + col * 18, t + 82 + row * 18);
@@ -81,8 +74,26 @@ public class BreederScreen extends AbstractContainerScreen<BreederMenu> {
             drawSlot(g, l + 7 + col * 18, t + 140);
     }
 
+    @Override
+    protected void renderLabels(GuiGraphics g, int mx, int my) {
+        g.drawString(font, title, (imageWidth - font.width(title)) / 2, 6, 0x404040, false);
+        g.drawString(font, playerInventoryTitle, inventoryLabelX, imageHeight - 94, 0x404040, false);
+    }
+
+    /** Vanilla-style sunken slot: dark top+left, light bottom+right, gray fill.
+     *  x,y = top-left of the 18×18 slot box (1px before the 16×16 item area). */
     private void drawSlot(GuiGraphics g, int x, int y) {
-        g.fill(x, y, x + 18, y + 18, COL_BORDER);
-        g.fill(x + 1, y + 1, x + 17, y + 17, COL_SLOT);
+        g.fill(x,      y,      x + 18, y + 1,  0xFF373737);
+        g.fill(x,      y,      x + 1,  y + 18, 0xFF373737);
+        g.fill(x,      y + 17, x + 18, y + 18, 0xFFFFFFFF);
+        g.fill(x + 17, y,      x + 18, y + 18, 0xFFFFFFFF);
+        g.fill(x + 1,  y + 1,  x + 17, y + 17, 0xFF8B8B8B);
+    }
+
+    private void drawArrow(GuiGraphics g, int ax, int cy) {
+        for (int i = 0; i < 7; i++) {
+            int h = 3 - Math.abs(i - 3);
+            g.fill(ax + i, cy - h, ax + i + 1, cy + h + 1, 0xFF666666);
+        }
     }
 }
