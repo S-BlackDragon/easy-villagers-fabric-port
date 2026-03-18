@@ -2,6 +2,8 @@ package de.maxhenkel.easyvillagers.loottable;
 
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import de.maxhenkel.easyvillagers.blocks.tileentity.TraderTileentityBase;
+import de.maxhenkel.easyvillagers.blocks.tileentity.VillagerTileentity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
@@ -28,6 +30,15 @@ public class CopyBlockEntityData extends LootItemConditionalFunction {
         BlockEntity blockEntity = context.getParamOrNull(LootContextParams.BLOCK_ENTITY);
         if (blockEntity == null) {
             return stack;
+        }
+        // For villager-based blocks, only embed block entity data when there is
+        // meaningful content (villager or workstation).  Empty blocks should stack
+        // normally — adding block-entity NBT to an empty block prevents stacking.
+        if (blockEntity instanceof VillagerTileentity vt) {
+            boolean hasWorkstation = blockEntity instanceof TraderTileentityBase tb && tb.hasWorkstation();
+            if (!vt.hasVillager() && !hasWorkstation) {
+                return stack;
+            }
         }
         stack.applyComponents(blockEntity.collectComponents());
         CompoundTag compoundtag = blockEntity.saveCustomAndMetadata(context.getLevel().registryAccess());

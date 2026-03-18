@@ -77,7 +77,26 @@ public abstract class TraderBlockBase extends VillagerBlockBase implements Entit
                 level.playSound(null, pos, type.getPlaceSound(), SoundSource.BLOCKS, type.getVolume(), type.getPitch());
             }
             return ItemInteractionResult.sidedSuccess(level.isClientSide);
+        } else if (player.isShiftKeyDown() && trader.hasVillager()) {
+            // Extract villager first (before workstation) — player gets villager on first shift-click
+            if (level.isClientSide) {
+                trader.setVillager(ItemStack.EMPTY);
+            } else {
+                ItemStack stack = trader.removeVillager();
+                if (heldItem.isEmpty()) {
+                    player.setItemInHand(handIn, stack);
+                } else {
+                    if (!player.getInventory().add(stack)) {
+                        Direction direction = state.getValue(TraderBlockBase.FACING);
+                        Containers.dropItemStack(level, direction.getStepX() + pos.getX() + 0.5D, pos.getY() + 0.5D, direction.getStepZ() + pos.getZ() + 0.5D, stack);
+                    }
+                }
+                float celebratePitch = VillagerData.isBaby(stack) ? 1.6F : 0.9F;
+                playVillagerSound(level, pos, SoundEvents.VILLAGER_CELEBRATE, celebratePitch);
+            }
+            return ItemInteractionResult.sidedSuccess(level.isClientSide);
         } else if (traderBase != null && player.isShiftKeyDown() && traderBase.hasWorkstation()) {
+            // Extract workstation second (shift-click again after villager is removed)
             if (level.isClientSide) {
                 traderBase.setWorkstation(net.minecraft.world.level.block.Blocks.AIR);
             } else {
@@ -98,26 +117,6 @@ public abstract class TraderBlockBase extends VillagerBlockBase implements Entit
                         Containers.dropItemStack(level, direction.getStepX() + pos.getX() + 0.5D, pos.getY() + 0.5D, direction.getStepZ() + pos.getZ() + 0.5D, blockStack);
                     }
                 }
-                if (traderBase.hasVillager()) {
-                    playVillagerSound(level, pos, SoundEvents.VILLAGER_NO);
-                }
-            }
-            return ItemInteractionResult.sidedSuccess(level.isClientSide);
-        } else if (player.isShiftKeyDown() && trader.hasVillager()) {
-            if (level.isClientSide) {
-                trader.setVillager(ItemStack.EMPTY);
-            } else {
-                ItemStack stack = trader.removeVillager();
-                if (heldItem.isEmpty()) {
-                    player.setItemInHand(handIn, stack);
-                } else {
-                    if (!player.getInventory().add(stack)) {
-                        Direction direction = state.getValue(TraderBlockBase.FACING);
-                        Containers.dropItemStack(level, direction.getStepX() + pos.getX() + 0.5D, pos.getY() + 0.5D, direction.getStepZ() + pos.getZ() + 0.5D, stack);
-                    }
-                }
-                float celebratePitch = VillagerData.isBaby(stack) ? 1.6F : 0.9F;
-                playVillagerSound(level, pos, SoundEvents.VILLAGER_CELEBRATE, celebratePitch);
             }
             return ItemInteractionResult.sidedSuccess(level.isClientSide);
         } else if (traderBase != null && openGUI(traderBase, player, level, pos)) {

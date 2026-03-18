@@ -45,6 +45,7 @@ public class AutoTraderTileentity extends TraderTileentityBase implements Worldl
     public void setSelectedTradeIndex(int index) {
         selectedTradeIndex = index;
         setChanged();
+        sync();
     }
 
     // -----------------------------------------------------------------------
@@ -134,6 +135,7 @@ public class AutoTraderTileentity extends TraderTileentityBase implements Worldl
             slots[2].grow(result.getCount());
         }
 
+        tradedInThisBlock = true;
         entity.notifyTrade(offer);
         saveVillagerEntity();
         setChanged();
