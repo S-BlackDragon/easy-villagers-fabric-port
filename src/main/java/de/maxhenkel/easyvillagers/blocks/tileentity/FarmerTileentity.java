@@ -50,7 +50,7 @@ public class FarmerTileentity extends TraderTileentityBase implements WorldlyCon
     // -----------------------------------------------------------------------
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, FarmerTileentity te) {
-        if (!te.hasVillager() || te.localSlots[0].isEmpty()) {
+        if (!te.hasVillager() || te.localSlots[0].isEmpty() || !isPlantableCrop(te.localSlots[0])) {
             te.farmTimer = 0;
             return;
         }
@@ -67,7 +67,7 @@ public class FarmerTileentity extends TraderTileentityBase implements WorldlyCon
 
     private void generateCrop(Level level) {
         ItemStack food = localSlots[0];
-        if (food.isEmpty()) return;
+        if (food.isEmpty() || !isPlantableCrop(food)) return;
 
         // Food is NOT consumed; it acts as a template for what to produce
         ItemStack produce = food.copyWithCount(1);
