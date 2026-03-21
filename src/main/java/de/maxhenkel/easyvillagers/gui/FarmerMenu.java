@@ -37,8 +37,12 @@ public class FarmerMenu extends AbstractContainerMenu {
             }
         });
 
-        // Slot 1 – food input (accepts any item)
-        addSlot(new Slot(farmer, 1, SLOT_FOOD_X, SLOT_FOOD_Y));
+        // Slot 1 – food input (only plantable crops)
+        addSlot(new Slot(farmer, 1, SLOT_FOOD_X, SLOT_FOOD_Y) {
+            @Override public boolean mayPlace(ItemStack stack) {
+                return FarmerTileentity.isPlantableCrop(stack);
+            }
+        });
 
         // Slots 2–5 – 2×2 output grid (take-only)
         addSlot(new Slot(farmer, 2, OUTPUT_X,      OUTPUT_Y_TOP) { @Override public boolean mayPlace(ItemStack s) { return false; } });
@@ -115,11 +119,13 @@ public class FarmerMenu extends AbstractContainerMenu {
             // Container slots → player inventory
             if (!moveItemStackTo(stack, 6, 42, true)) return ItemStack.EMPTY;
         } else {
-            // Player inventory → villager slot if it's a villager, else food slot
+            // Player inventory → villager slot if villager, food slot if plantable crop, else reject
             if (stack.getItem() instanceof VillagerItem && !VillagerData.isBaby(stack)) {
                 if (!moveItemStackTo(stack, 0, 1, false)) return ItemStack.EMPTY;
-            } else {
+            } else if (FarmerTileentity.isPlantableCrop(stack)) {
                 if (!moveItemStackTo(stack, 1, 2, false)) return ItemStack.EMPTY;
+            } else {
+                return ItemStack.EMPTY;
             }
         }
 
