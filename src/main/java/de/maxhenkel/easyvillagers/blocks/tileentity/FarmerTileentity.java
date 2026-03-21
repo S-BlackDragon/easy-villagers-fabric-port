@@ -4,6 +4,9 @@ import de.maxhenkel.easyvillagers.blocks.ModBlocks;
 import de.maxhenkel.easyvillagers.datacomponents.VillagerData;
 import de.maxhenkel.easyvillagers.items.VillagerItem;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.level.block.CropBlock;
+import net.minecraft.world.level.block.NetherWartBlock;
+import net.minecraft.world.level.block.StemBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 import net.minecraft.core.BlockPos;
@@ -121,7 +124,7 @@ public class FarmerTileentity extends TraderTileentityBase implements WorldlyCon
     @Override
     public boolean canPlaceItemThroughFace(int slot, ItemStack stack, Direction dir) {
         if (slot == 0) return canPlaceItem(0, stack);
-        if (slot == 1) return true;
+        if (slot == 1) return canPlaceItem(1, stack);
         return false;
     }
 
@@ -189,8 +192,20 @@ public class FarmerTileentity extends TraderTileentityBase implements WorldlyCon
     @Override
     public boolean canPlaceItem(int slot, ItemStack stack) {
         if (slot == 0) return stack.getItem() instanceof VillagerItem && !VillagerData.isBaby(stack);
-        if (slot == 1) return true;
+        if (slot == 1) return isPlantableCrop(stack);
         return false;
+    }
+
+    /**
+     * Returns true for items that a farmer villager can plant and harvest:
+     * - CropBlock items: wheat_seeds, carrot, potato, beetroot_seeds, torchflower_seeds, pitcher_pod, …
+     * - StemBlock items: melon_seeds, pumpkin_seeds
+     * - NetherWartBlock items: nether_wart
+     */
+    public static boolean isPlantableCrop(ItemStack stack) {
+        if (!(stack.getItem() instanceof BlockItem bi)) return false;
+        var block = bi.getBlock();
+        return block instanceof CropBlock || block instanceof StemBlock || block instanceof NetherWartBlock;
     }
 
     @Override
